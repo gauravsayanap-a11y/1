@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e17">
+<title>Cipher</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#16181d;--mute:#7a7f89;--line:#eceef2;--key:#eef0f3;--acc:#2563eb;--bull:#1f7a5a;--cow:#d98a1e;--ai:#7c4dff;--shadow:0 1px 2px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.06);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--card:#222426;--ink:#f1f0ec;--mute:#9a9aa0;--line:#34363a;--key:#2e3033;--acc:#6ea8ff;--bull:#5fbf8f;--cow:#e9a94a;--ai:#b794ff;--shadow:none;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181a;--card:#222426;--ink:#f1f0ec;--mute:#9a9aa0;--line:#34363a;--key:#2e3033;--acc:#6ea8ff;--bull:#5fbf8f;--cow:#e9a94a;--ai:#b794ff;--shadow:none;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:22px 16px 32px}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0 0 14px}
+h1 .mute{font-size:14px;font-weight:500;letter-spacing:0}
+.card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.mute{color:var(--mute);font-size:13px}
+.u{color:var(--acc)}.a{color:var(--ai)}
+input[type=checkbox]{accent-color:var(--acc)}
+.opts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 18px}
+button{font:inherit;color:var(--ink);background:var(--key);border:0;border-radius:12px;padding:12px 4px;font-size:15px;cursor:pointer}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.4}
+.opt{flex:1;min-width:52px;font-weight:600}
+.opt.sel{background:var(--acc);color:#fff}
+#rb .opt.sel{background:var(--bull)}#rc .opt.sel{background:var(--cow)}
+.wide{width:100%;font-size:16px;padding:15px;margin-top:10px;background:var(--acc);color:#fff;font-weight:600;border-radius:14px}
+.ghost{background:var(--card);box-shadow:var(--shadow);color:var(--ink);font-weight:500}
+.hide{display:none}
+/* points */
+#lvl{display:flex;justify-content:space-between;align-items:baseline}
+#lvl b{font-size:20px}
+.bar{height:10px;background:var(--key);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),#38bdf8);border-radius:99px;transition:width .4s}
+/* game */
+#score{display:flex;justify-content:space-between;align-items:center;font-size:15px;background:var(--card);border-radius:999px;padding:10px 18px;box-shadow:var(--shadow);margin-bottom:14px}
+#score b{font-size:20px}
+#logs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+.box{height:164px;overflow-y:auto;padding:0 14px 8px;margin:0}
+.hd{position:sticky;top:0;background:var(--card);font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:12px 0 6px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:4px;padding:7px 0}
+.row+.row{border-top:1px solid var(--line)}
+.g{font-size:18px;font-weight:600;letter-spacing:3px;font-variant-numeric:tabular-nums}
+.bc{font-size:12px;font-weight:600;white-space:nowrap}
+.bc .b{color:var(--bull)}.bc .c{color:var(--cow)}
+.none{color:var(--mute);font-size:12px;padding:12px 0}
+#msg{min-height:46px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 10px;font-size:14px;line-height:1.4;font-weight:600}
+#bg{font-size:42px;letter-spacing:10px;text-align:center;font-weight:700;color:var(--ai);margin:6px 0 18px}
+.rep .opt{font-size:17px;padding:12px 0}
+#slots{display:flex;gap:10px;justify-content:center;margin:8px 0 16px}
+.slot{width:54px;height:62px;background:var(--key);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600}
+.slot.on{box-shadow:inset 0 0 0 2px var(--acc)}
+#pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#pad button{background:var(--card);box-shadow:var(--shadow);border-radius:14px;padding:16px 0;font-size:22px;font-weight:500}
+#pad #go{background:var(--acc);color:#fff;font-size:16px;font-weight:600}
+#pad button:disabled{box-shadow:none;background:var(--key)}
+#opad button{background:var(--card);box-shadow:var(--shadow);border-radius:14px;padding:16px 0;font-size:22px;font-weight:500}
+#opad #ogo{background:var(--acc);color:#fff;font-size:16px;font-weight:600}
+#opad button:disabled{box-shadow:none;background:var(--key)}
+#ocode{font:inherit;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--key);color:var(--ink);text-transform:uppercase;min-width:0}
+/* history */
+.gh{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--card);box-shadow:var(--shadow);border-radius:14px;padding:12px 14px;margin-top:10px}
+.gh small{display:block;color:var(--mute);font-size:12px;margin-top:2px}
+.gd{background:var(--card);border-radius:0 0 14px 14px;padding:4px 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gd .hd{position:static;padding:8px 0 4px}
+/* premium look */
+html:root:root{--bg:#0b0e17;--card:rgba(255,255,255,.05);--ink:#eef1f8;--mute:#8d96ab;--line:rgba(255,255,255,.08);--key:rgba(255,255,255,.07);--acc:#6c8cff;--bull:#5ad1a0;--cow:#f0b35a;--ai:#a98bff;--shadow:none;color-scheme:dark}
+html,body{background:radial-gradient(900px 520px at 50% -8%,#1c2650 0%,#0b0e17 62%) fixed,#0b0e17}
+body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+main{padding:26px 18px 40px}
+h1{font-size:30px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(90deg,#fff,#9fb4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:none;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+#acct{padding:10px 14px}
+#score{background:var(--card);border:1px solid var(--line);box-shadow:none}
+button{transition:transform .12s,background .2s}
+.opt{background:var(--key);border:1px solid transparent;border-radius:14px;font-weight:600;color:var(--ink)}
+.opt.sel{background:linear-gradient(135deg,#5b7cff,#7aa0ff);color:#fff;box-shadow:0 6px 18px rgba(92,124,255,.3)}
+#rb .opt.sel{background:var(--bull);color:#06281a;box-shadow:none}
+#rc .opt.sel{background:var(--cow);color:#2b1a00;box-shadow:none}
+.wide{background:linear-gradient(135deg,#5b7cff,#7aa0ff);box-shadow:0 10px 26px rgba(92,124,255,.28);border-radius:16px;padding:16px;letter-spacing:.02em}
+.ghost{background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--ink)}
+.bar{height:8px;background:rgba(255,255,255,.08)}
+.bar i{background:linear-gradient(90deg,#5b7cff,#7ad0ff)}
+.hd{background:#151a2b}
+.row+.row{border-top:1px solid var(--line)}
+.slot{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:16px}
+.slot.on{border-color:var(--acc);box-shadow:0 0 0 3px rgba(108,140,255,.2)}
+#pad button,#opad button{background:rgba(255,255,255,.06);border:1px solid var(--line);box-shadow:none;border-radius:16px;color:var(--ink)}
+#pad #go,#opad #ogo{background:linear-gradient(135deg,#5b7cff,#7aa0ff);border:0;color:#fff;box-shadow:0 8px 20px rgba(92,124,255,.28)}
+#pad button:disabled,#opad button:disabled{background:rgba(255,255,255,.04);box-shadow:none}
+.gh{background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--ink)}
+.gd{background:var(--card);border:1px solid var(--line);border-top:0}
+#bg{color:#b9a6ff;text-shadow:0 0 24px rgba(169,139,255,.4)}
+#acct{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#5b7cff,#a98bff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex:none;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.at{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.35}
+.at small{display:block;color:var(--mute);font-weight:400;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.pill.go{background:linear-gradient(135deg,#5b7cff,#7aa0ff);border:0;color:#fff}
+#sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,.66);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+#sheet.hide{display:none}
+.sheetbox{position:relative;width:100%;max-width:360px;background:#12172a;border:1px solid var(--line);border-radius:24px;padding:28px 22px 20px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.sx{position:absolute;top:12px;right:12px;width:32px;height:32px;padding:0;border-radius:50%;font-size:14px;background:rgba(255,255,255,.07);color:var(--mute)}
+.logo{width:56px;height:56px;margin:0 auto 12px;border-radius:18px;background:linear-gradient(135deg,#5b7cff,#a98bff);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;color:#fff}
+.sheetbox h2{margin:0 0 4px;font-size:22px}
+.gbtn{width:100%;margin-top:18px;padding:13px;border-radius:14px;background:#fff;color:#1f1f1f;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:12px;margin:16px 0 14px}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+#nick{width:100%;font:inherit;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);margin-bottom:10px}
+#nick:focus{outline:none;border-color:var(--acc)}
+.guest{width:100%;padding:13px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:600}
+.small{font-size:12px;margin:14px 0 0}
+/* large screens: smaller, tidier */
+@media (min-width:700px){main{max-width:380px;zoom:.85;padding-top:20px}.sheetbox{zoom:.88}}
+@media (min-width:1100px){main{zoom:.78}.sheetbox{zoom:.82}}
+</style>
+</head>
+<body>
+<main>
+
+  <section id="home">
+    <div class="card" id="acct"><div class="av" id="av">?</div><div class="at" id="acctText"></div><button class="pill go" id="acctBtn">Sign in</button></div>
+    <div class="card" id="pts"></div>
+    <div class="card">
+      <div class="mute">Mode</div>
+      <div class="opts" id="mode"></div>
+      <div class="mute">Number of digits</div>
+      <div class="opts" id="dig"></div>
+      <div id="fmtwrap"><div class="mute">Match format</div>
+      <div class="opts" id="fmt"></div></div>
+      <p class="mute" id="note" style="line-height:1.5;margin:14px 0 0"></p>
+      <div id="onlinebox" class="hide" style="margin-top:12px"><button class="wide" id="ocreate">Create room</button><div style="display:flex;gap:8px;margin-top:10px"><input id="ocode" placeholder="Room code" maxlength="5" style="flex:1"><button id="ojoin" style="padding:0 20px">Join</button></div></div>
+      <button class="wide" id="start">Start match</button>
+    </div>
+    <button class="wide ghost" id="openhist">History of games</button>
+  </section>
+
+  <section id="hist" class="hide">
+    <button class="ghost" id="back1" style="padding:10px 16px;margin-bottom:6px">← Home</button>
+    <div id="hlist"></div>
+    <button class="wide ghost hide" id="clear">Clear history</button>
+  </section>
+
+  <section id="game" class="hide">
+    <div id="score"></div>
+    <div id="logs">
+      <div class="card box" id="lu"></div>
+      <div class="card box" id="la"></div>
+    </div>
+    <div id="msg"></div>
+    <div class="card rep hide" id="report">
+      <div class="mute" style="text-align:center">BOT guesses</div>
+      <div id="bg"></div>
+      <div class="mute">Bulls (right digit, right spot)</div>
+      <div class="opts" id="rb"></div>
+      <div class="mute">Cows (right digit, wrong spot)</div>
+      <div class="opts" id="rc"></div>
+      <button class="wide" id="send" style="margin-top:0">Send</button>
+    </div>
+    <div id="play" class="hide">
+      <div class="mute" style="text-align:center">Your guess for BOT’s number</div>
+      <div id="slots"></div>
+      <div id="pad"></div>
+    </div>
+    <button class="wide hide" id="next">Next round</button>
+    <button class="wide ghost hide" id="home2">Back to home</button>
+    <button class="wide ghost hide" id="quit">Quit game</button>
+  </section>
+
+  <section id="online" class="hide">
+    <div class="card" id="oinfo"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px">
+      <div class="card box" id="olu"></div><div class="card box" id="ola"></div>
+    </div>
+    <div id="oplay" class="hide">
+      <div id="oslots" style="display:flex;gap:10px;justify-content:center;margin:8px 0 16px"></div>
+      <div id="opad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+    </div>
+    <button class="wide ghost" id="oleave">Leave room</button>
+  </section>
+</main>
+<div id="sheet" class="hide">
+  <div class="sheetbox">
+    <button class="sx" id="sx" aria-label="Close">✕</button>
+    <div class="logo">C</div>
+    <h2>Welcome to Cipher</h2>
+    <p class="mute">Save your points and play friends online.</p>
+    <button class="gbtn" id="gbtn"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Continue with Google</button>
+    <div class="or">or</div>
+    <input id="nick" placeholder="Choose a nickname" maxlength="16" autocomplete="off">
+    <button class="guest" id="guestbtn">Play as guest</button>
+    <p class="mute small">Guest progress stays with this browser.</p>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var FORMATS=[{n:"Single round",need:1},{n:"Best of 3",need:2},{n:"Best of 5",need:3},{n:"Best of 7",need:4}];
+  var LEVELS=[{n:"Rookie",at:0},{n:"Amateur",at:50},{n:"Skilled",at:120},{n:"Expert",at:220},{n:"Master",at:350}];
+  var POPT=[0,0.3,0.6,0.85,1],WILD=[0.35,0,0,0,0];
+  function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}if(window.botCloud&&(k==="bot-pts"||k==="bot-hist"))window.botCloud.save(S.pts,S.hist)}
+  var S={mode:"duel",n:3,need:1,score:{u:0,a:0},round:1,starter:"u",next:"u",aSecret:"",cands:[],uT:[],aT:[],cur:"",phase:"home",busy:false,pending:"",rb:-1,rc:-1,cache:{},gid:0,lvl:0,pts:load("bot-pts",0),hist:load("bot-hist",[]),open:-1};
+
+  function levelOf(p){var l=0;for(var i=0;i<LEVELS.length;i++)if(p>=LEVELS[i].at)l=i;return l}
+  function rep(){return true}
+  function allCodes(){
+    var key=S.n+(rep()?"r":"u");
+    if(S.cache[key])return S.cache[key];
+    var r=[],tot=Math.pow(10,S.n),i,s,j;
+    for(i=0;i<tot;i++){
+      s=String(i);while(s.length<S.n)s="0"+s;
+      if(!rep()){var seen={},ok=true;for(j=0;j<s.length;j++){if(seen[s[j]]){ok=false;break}seen[s[j]]=1}if(!ok)continue}
+      r.push(s);
+    }
+    return S.cache[key]=r;
+  }
+  function valid(s){
+    if(s.length!==S.n)return false;
+    if(rep())return true;
+    var seen={};for(var i=0;i<s.length;i++){if(seen[s[i]])return false;seen[s[i]]=1}return true;
+  }
+  function score(a,g){
+    var n=S.n,b=0,ca=[0,0,0,0,0,0,0,0,0,0],cg=[0,0,0,0,0,0,0,0,0,0],t=0,i,x,y;
+    for(i=0;i<n;i++){x=a.charCodeAt(i)-48;y=g.charCodeAt(i)-48;if(x===y)b++;ca[x]++;cg[y]++}
+    for(i=0;i<10;i++)t+=ca[i]<cg[i]?ca[i]:cg[i];
+    return b*(n+1)+(t-b);
+  }
+  function sample(arr,m){
+    if(arr.length<=m)return arr;
+    var a=arr.slice(),i,j,t;
+    for(i=0;i<m;i++){j=i+Math.floor(Math.random()*(a.length-i));t=a[i];a[i]=a[j];a[j]=t}
+    return a.slice(0,m);
+  }
+  function rnd(a){return a[Math.floor(Math.random()*a.length)]}
+
+  // Strongest play: keep every number that fits all answers, pick the guess that splits them best.
+  function pickBest(){
+    var all=allCodes(),c=S.cands,n=S.n;
+    if(S.aT.length===0&&n>=4)return "0123456789".slice(0,n);
+    var cs=sample(c,350),pool;
+    if(c.length<=2)pool=c;
+    else if(all.length<=1000)pool=all;
+    else pool=sample(c,350).concat(sample(all,150));
+    var isC=new Set(c),nb=(n+1)*(n+1),best=pool[0],bw=1e9,bs=1e9,bc=1;
+    for(var p=0;p<pool.length;p++){
+      var g=pool[p],cnt=new Array(nb).fill(0),i;
+      for(i=0;i<cs.length;i++)cnt[score(cs[i],g)]++;
+      var w=0,ss=0;
+      for(i=0;i<nb;i++){if(cnt[i]>w)w=cnt[i];ss+=cnt[i]*cnt[i]}
+      var cc=isC.has(g)?0:1;
+      if(w<bw||(w===bw&&(ss<bs||(ss===bs&&cc<bc)))){bw=w;bs=ss;bc=cc;best=g}
+    }
+    return best;
+  }
+  // Skill depends on level: low levels sometimes guess wildly or just any fitting number.
+  function botGuess(){
+    var c=S.cands,L=S.lvl;
+    if(c.length===1)return c[0];
+    if(Math.random()<WILD[L])return rnd(allCodes());
+    if(Math.random()<POPT[L])return pickBest();
+    return rnd(c);
+  }
+
+  function say(t,col){var m=$("msg");m.textContent=t;m.style.color=col||""}
+  function bcHtml(k,n){if(k==null)return '<span class="bc mute">…</span>';var n1=n+1;return '<span class="bc"><span class="b">'+Math.floor(k/n1)+'B</span> <span class="c">'+(k%n1)+'C</span></span>'}
+  function list(title,arr,cls,n){
+    var h='<div class="hd '+cls+'">'+title+' ('+arr.length+')</div>';
+    if(!arr.length)h+='<div class="none">Nothing yet</div>';
+    arr.forEach(function(t){h+='<div class="row"><span class="g">'+t.g+'</span>'+bcHtml(t.k,n)+'</div>'});
+    return h;
+  }
+  function opts(el,items,isSel,pick){
+    el.innerHTML="";
+    items.forEach(function(it){
+      var b=document.createElement("button");b.className="opt"+(isSel(it)?" sel":"");b.textContent=it.label;
+      b.onclick=function(){pick(it)};el.appendChild(b);
+    });
+  }
+
+  function render(){
+    var h=S.phase;
+    $("home").classList.toggle("hide",h!=="home");
+    $("hist").classList.toggle("hide",h!=="hist");
+    $("game").classList.toggle("hide",h==="home"||h==="hist"||h==="online");$("online").classList.toggle("hide",h!=="online");
+    if(h==="home")renderHome();else if(h==="hist")renderHist();else if(h==="online")renderOnline();else renderGame();
+  }
+  function renderHome(){
+    var l=levelOf(S.pts),cur=LEVELS[l],nx=LEVELS[l+1];
+    var pct=nx?Math.round((S.pts-cur.at)/(nx.at-cur.at)*100):100;
+    $("pts").innerHTML='<div id="lvl"><span class="mute">Level '+(l+1)+'</span><span class="mute">'+S.pts+' pts</span></div><b style="font-size:22px">'+cur.n+'</b><div class="bar"><i style="width:'+pct+'%"></i></div><div class="mute">'+(nx?(nx.at-S.pts)+' pts to '+nx.n+'. BOT plays harder as you level up.':'Max level. BOT plays at full strength.')+'</div>';
+    opts($("mode"),[{label:"Duel with BOT",v:"duel"},{label:"Solo (just guess)",v:"solo"},{label:"Online (friend)",v:"online"}],function(i){return i.v===S.mode},function(i){S.mode=i.v;render()});
+    $("fmtwrap").classList.toggle("hide",S.mode!=="duel");$("start").classList.toggle("hide",S.mode==="online");$("onlinebox").classList.toggle("hide",S.mode!=="online");
+    $("note").textContent=S.mode==="solo"?"No number of your own needed. Crack BOT’s hidden number in as few guesses as you can. Fewer guesses earn more points.":"Write your secret number in your notebook. You guess BOT’s number here and tell BOT only the bulls and cows for its guesses.";
+    if(S.mode==="online")$("note").textContent="Play a friend live. Each of you secretly picks a number here, then you take turns guessing. Whoever cracks the other’s number first wins. Both of you must be signed in.";
+    opts($("dig"),[3,4,5].map(function(d){return{label:d+"",v:d}}),function(i){return i.v===S.n},function(i){S.n=i.v;render()});
+    opts($("fmt"),FORMATS.map(function(x){return{label:x.n,v:x.need}}),function(i){return i.v===S.need},function(i){S.need=i.v;render()});
+  }
+  function renderHist(){
+    var el=$("hlist");el.innerHTML="";
+    $("clear").classList.toggle("hide",!S.hist.length);
+    if(!S.hist.length){el.innerHTML='<div class="card mute">No games yet. Finished rounds show up here.</div>';return}
+    S.hist.slice().reverse().forEach(function(g,ri){
+      var i=S.hist.length-1-ri,open=S.open===i;
+      var b=document.createElement("button");b.className="gh";
+      if(open)b.style.borderRadius="14px 14px 0 0";
+      var d=new Date(g.t).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+      b.innerHTML='<span><b>Game '+(i+1)+'</b> · '+g.n+' digits'+(g.mode==="solo"?' · Solo':'')+'<small>'+d+' · BOT: '+LEVELS[g.lvl].n+' · BOT’s number '+g.bot+'</small></span><b class="'+(g.res==="u"?"u":"a")+'">'+(g.res==="u"?"You won":"BOT won")+'</b>';
+      b.onclick=function(){S.open=open?-1:i;renderHist()};
+      el.appendChild(b);
+      if(open){var dd=document.createElement("div");dd.className="gd";dd.innerHTML='<div>'+list("Your guesses",g.u,"u",g.n)+'</div><div>'+list("BOT’s guesses",g.a,"a",g.n)+'</div>';el.appendChild(dd)}
+    });
+  }
+  function renderGame(){
+    var h=S.phase,f=S.need===1?"Single round":"First to "+S.need;
+    $("score").innerHTML='<span class="u">You <b>'+S.score.u+'</b></span><span class="mute">Round '+S.round+' · '+S.n+' digits · '+LEVELS[S.lvl].n+'</span><span class="a"><b>'+S.score.a+'</b> BOT</span>';
+    $("lu").innerHTML=list("Your guesses",S.uT,"u",S.n);
+    $("la").innerHTML=list("BOT’s guesses",S.aT,"a",S.n);
+    var solo=S.mode==="solo";
+    $("la").classList.toggle("hide",solo);$("logs").style.gridTemplateColumns=solo?"1fr":"1fr 1fr";
+    if(solo)$("score").innerHTML='<span class="u">Solo</span><span class="mute">'+S.n+' digits · '+S.uT.length+' guess'+(S.uT.length===1?"":"es")+'</span><span class="mute">'+S.score.u+' cracked</span>';
+    $("lu").scrollTop=$("lu").scrollHeight;$("la").scrollTop=$("la").scrollHeight;
+    $("report").classList.toggle("hide",h!=="report");
+    $("play").classList.toggle("hide",h!=="guess");
+    $("next").classList.toggle("hide",h!=="between");
+    $("home2").classList.toggle("hide",h!=="between"&&h!=="over");
+    $("quit").classList.toggle("hide",h==="between"||h==="over");
+    if(h==="report"){
+      $("bg").textContent=S.pending;
+      var nums=function(){var r=[];for(var i=0;i<=S.n;i++)r.push({label:i+"",v:i});return r};
+      opts($("rb"),nums(),function(i){return i.v===S.rb},function(i){S.rb=i.v;render()});
+      opts($("rc"),nums(),function(i){return i.v===S.rc},function(i){S.rc=i.v;render()});
+      $("send").disabled=S.rb<0||S.rc<0;
+    }
+    if(h==="guess"){
+      var sl=$("slots");sl.innerHTML="";
+      for(var i=0;i<S.n;i++){var d=document.createElement("div");d.className="slot"+(i===S.cur.length?" on":"");d.textContent=S.cur[i]||"";sl.appendChild(d)}
+      $("go").disabled=!valid(S.cur);
+    }
+  }
+
+  function startMatch(){S.score={u:0,a:0};S.round=1;S.starter="u";startRound()}
+  function startRound(){
+    var all=allCodes();
+    S.gid++;S.lvl=levelOf(S.pts);
+    S.aSecret=rnd(all);S.cands=all;S.uT=[];S.aT=[];S.cur="";S.rb=-1;S.rc=-1;S.next=S.mode==="solo"?"u":S.starter;S.busy=false;
+    say("");goNext();
+  }
+  function goNext(){
+    if(S.next==="a"){
+      var id=S.gid;S.busy=true;S.phase="think";say("BOT is thinking…","var(--ai)");render();
+      setTimeout(function(){
+        if(id!==S.gid)return;
+        S.pending=botGuess();S.rb=-1;S.rc=-1;S.phase="report";S.busy=false;
+        say("Tell BOT how many bulls and cows it got.","");render();
+      },350);
+    }else{S.phase="guess";S.cur="";render()}
+  }
+  function submitGuess(){
+    if(S.phase!=="guess"||!valid(S.cur))return;
+    var g=S.cur,k=score(S.aSecret,g);S.cur="";
+    S.uT.push({g:g,k:k});
+    if(Math.floor(k/(S.n+1))===S.n){endRound("u");return}
+    S.next=S.mode==="solo"?"u":"a";say("");goNext();
+  }
+  function sendReport(){
+    var n=S.n,b=S.rb,c=S.rc;
+    if(S.phase!=="report"||b<0||c<0)return;
+    if(b+c>n||(b===n-1&&c===1)){say("That combination isn’t possible. Check your counts.","var(--cow)");return}
+    var g=S.pending,k=b*(n+1)+c;
+    var nc=S.cands.filter(function(x){return score(x,g)===k});
+    if(!nc.length){say("Those counts don’t fit your earlier answers. Please re-check BOT’s guesses.","var(--cow)");return}
+    S.cands=nc;S.aT.push({g:g,k:k});
+    if(b===n){endRound("a");return}
+    S.next="u";say("");goNext();
+  }
+  function endRound(w){
+    S.score[w]++;
+    S.hist.push({t:Date.now(),mode:S.mode,n:S.n,res:w,bot:S.aSecret,lvl:S.lvl,u:S.uT.slice(),a:S.aT.slice()});
+    if(S.hist.length>40)S.hist.shift();
+    save("bot-hist",S.hist);
+    var win=S.mode!=="solo"&&S.score[w]>=S.need,col=w==="u"?"var(--acc)":"var(--ai)",t,gain=0,before=levelOf(S.pts);
+    if(w==="u"){if(S.mode==="solo")gain=Math.max(5,15*(S.n-2)+10-2*(S.uT.length-1));else{gain=10*(S.n-2);if(win&&S.need>1)gain+=20}}
+    S.pts+=gain;save("bot-pts",S.pts);
+    var after=levelOf(S.pts);
+    if(win){
+      S.phase="over";
+      t=w==="u"?(S.need===1?"🎉 You cracked BOT’s number first!":"🏆 You win the match "+S.score.u+"–"+S.score.a+"!"):(S.need===1?"🤖 BOT cracked your number first.":"🤖 BOT wins the match "+S.score.a+"–"+S.score.u+".");
+    }else{
+      S.phase="between";
+      t=w==="u"?"🎯 Point to you! BOT’s number was "+S.aSecret+".":"🤖 Point to BOT. (BOT’s number was "+S.aSecret+".)";
+    }
+    if(S.mode==="solo")t="🎉 Cracked it in "+S.uT.length+" guess"+(S.uT.length===1?"":"es")+"! BOT’s number was "+S.aSecret+".";
+    if(gain)t+=" +"+gain+" pts.";
+    if(after>before)t+=" ⬆️ Level up: "+LEVELS[after].n+". BOT now plays harder!";
+    say(t,col);render();
+  }
+  function goHome(){S.gid++;S.phase="home";S.busy=false;say("");render()}
+  function nextRound(){S.round++;S.starter=S.starter==="u"?"a":"u";startRound()}
+
+  function press(d){if(S.phase!=="guess"||S.cur.length>=S.n)return;S.cur+=d;render()}
+  function back(){if(S.phase!=="guess")return;S.cur=S.cur.slice(0,-1);render()}
+
+  var pad=$("pad");
+  for(var d=1;d<=9;d++){(function(d){var b=document.createElement("button");b.textContent=d;b.onclick=function(){press(String(d))};pad.appendChild(b)})(d)}
+  var bk=document.createElement("button");bk.textContent="⌫";bk.onclick=back;pad.appendChild(bk);
+  var z=document.createElement("button");z.textContent="0";z.onclick=function(){press("0")};pad.appendChild(z);
+  var go=document.createElement("button");go.id="go";go.textContent="Guess";go.onclick=submitGuess;pad.appendChild(go);
+
+  $("start").onclick=startMatch;$("send").onclick=sendReport;$("next").onclick=nextRound;
+  $("home2").onclick=goHome;$("quit").onclick=goHome;$("back1").onclick=goHome;
+  $("openhist").onclick=function(){S.phase="hist";S.open=-1;render()};
+  $("clear").onclick=function(){S.hist=[];save("bot-hist",[]);render()};
+  document.addEventListener("keydown",function(e){
+    if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==="Backspace")back();else if(e.key==="Enter")submitGuess();
+  });
+  function updateAcct(){
+    var u=S.user,av=$("av");
+    if(u){
+      var name=u.displayName||u.email||"Guest";
+      av.innerHTML=u.photoURL?'<img referrerpolicy="no-referrer" src="'+esc(u.photoURL)+'" alt="">':esc(name.charAt(0).toUpperCase());
+      $("acctText").innerHTML=esc(name)+'<small>'+(u.isAnonymous?"Guest · progress saved online":esc(u.email||"Signed in"))+'</small>';
+      $("acctBtn").textContent="Sign out";$("acctBtn").className="pill";
+    }else{
+      av.textContent="?";
+      $("acctText").innerHTML='Not signed in<small>Sign in to save progress and play online</small>';
+      $("acctBtn").textContent="Sign in";$("acctBtn").className="pill go";
+    }
+  }
+  $("acctBtn").onclick=function(){
+    if(!window.botCloud){alert("Firebase isn’t set up yet. Paste your firebaseConfig into the file first.");return}
+    if(S.user)window.botCloud.signOut();else $("sheet").classList.remove("hide");
+  };
+  window.botAuth=function(u){S.user=u;if(u)$("sheet").classList.add("hide");updateAcct()};
+  window.botLoaded=function(d){
+    if(typeof d.pts==="number"&&d.pts>S.pts)S.pts=d.pts;
+    var seen={};S.hist.forEach(function(g){seen[g.t]=1});
+    (d.hist||[]).forEach(function(g){if(!seen[g.t])S.hist.push(g)});
+    S.hist.sort(function(a,b){return a.t-b.t});
+    if(S.hist.length>40)S.hist=S.hist.slice(-40);
+    try{localStorage.setItem("bot-pts",JSON.stringify(S.pts));localStorage.setItem("bot-hist",JSON.stringify(S.hist))}catch(e){}
+    if(window.botCloud)window.botCloud.save(S.pts,S.hist);
+    render();
+  };
+  // ===== Online play: rooms live in Firestore; each player's secret stays on their own device =====
+  var O={code:"",role:"",room:null,secret:"",cur:"",locked:false,unsub:null,done:false,ans:{}};
+  function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function nm(){return(S.user&&S.user.displayName)||"Player"}
+  function needIn(){if(!window.botCloud||!window.botCloud.room||!S.user){$("sheet").classList.remove("hide");return true}return false}
+  function oerr(e){alert(((e&&e.message)||"Something went wrong.")+"\n\n[code: "+((e&&e.code)||"n/a")+" | project: "+((window.botCloud&&window.botCloud.pid)||"?")+" | signed in: "+(S.user?"yes ("+String(S.user.uid).slice(0,6)+")":"no")+"]")}
+  function enterRoom(code,role){
+    O={code:code,role:role,room:null,secret:"",cur:"",locked:false,unsub:null,done:false,ans:{}};
+    S.phase="online";
+    O.unsub=window.botCloud.room.watch(code,onRoom);
+    render();
+  }
+  function leave(){if(O.unsub)O.unsub();O.unsub=null;S.phase="home";render()}
+  function onRoom(r){
+    if(!r){if(S.phase==="online")alert("The room no longer exists.");leave();return}
+    O.room=r;S.n=r.n;
+    var cl=window.botCloud.room,gs=r.guesses||{};
+    if(O.role==="host"&&r.status==="secrets"&&r.ready&&r.ready.host&&r.ready.guest)cl.update(O.code,{status:"playing",turn:"host"}).catch(oerr);
+    if(r.status!=="lobby"&&O.secret){
+      Object.keys(gs).forEach(function(i){
+        var x=gs[i];
+        if(x.by!==O.role&&x.k==null&&!O.ans[i]){
+          O.ans[i]=1;
+          var k=score(O.secret,x.g),p={};
+          p["guesses."+i+".k"]=k;
+          if(Math.floor(k/(S.n+1))===S.n){p.status="done";p.winner=x.by}
+          cl.update(O.code,p).catch(oerr);
+        }
+      });
+    }
+    if(r.status==="done"&&!O.done){
+      O.done=true;
+      if(r.winner===O.role){S.pts+=10*(S.n-2);save("bot-pts",S.pts)}
+    }
+    render();
+  }
+  function renderOnline(){
+    var r=O.room,info=$("oinfo"),play=$("oplay");
+    if(!r){info.innerHTML='<div class="mute">Connecting…</div>';play.classList.add("hide");return}
+    var gs=r.guesses||{},mine=[],theirs=[];
+    Object.keys(gs).map(Number).sort(function(a,b){return a-b}).forEach(function(i){var x=gs[i];(x.by===O.role?mine:theirs).push({g:x.g,k:x.k==null?null:x.k})});
+    var o=r[O.role==="host"?"guest":"host"],on=esc(o?o.name:"your friend"),msg;
+    if(r.status==="lobby")msg="Share this code with your friend and wait for them to join…";
+    else if(r.status==="secrets")msg=O.locked?"Waiting for "+on+" to pick a number…":"Pick your secret number ("+S.n+" digits). Your friend can’t see it.";
+    else if(r.status==="playing")msg=r.turn===O.role?"Your turn: guess "+on+"’s number.":"Waiting for "+on+" to guess…";
+    else msg=r.winner===O.role?"🎉 You cracked "+on+"’s number first! +"+10*(S.n-2)+" pts":"😅 "+on+" cracked your number first.";
+    info.innerHTML='<div class="mute">Room code</div><div style="font-size:30px;font-weight:800;letter-spacing:6px">'+esc(O.code)+'</div><div style="margin-top:8px;font-weight:600;font-size:14px">'+msg+'</div>';
+    $("olu").innerHTML=list("You → "+on,mine,"u",S.n);
+    $("ola").innerHTML=list(on+" → you",theirs,"a",S.n);
+    var show=(r.status==="secrets"&&!O.locked)||(r.status==="playing"&&r.turn===O.role);
+    play.classList.toggle("hide",!show);
+    if(show){
+      var sl=$("oslots");sl.innerHTML="";
+      for(var i=0;i<S.n;i++){var d2=document.createElement("div");d2.className="slot"+(i===O.cur.length?" on":"");d2.textContent=O.cur[i]||"";sl.appendChild(d2)}
+      $("ogo").textContent=r.status==="secrets"?"Lock in":"Guess";
+      $("ogo").disabled=!valid(O.cur);
+    }
+  }
+  function opress(d){if(O.cur.length<S.n){O.cur+=d;renderOnline()}}
+  function oback(){O.cur=O.cur.slice(0,-1);renderOnline()}
+  function ogoFn(){
+    var r=O.room;if(!r||!valid(O.cur))return;
+    var cl=window.botCloud.room,p={};
+    if(r.status==="secrets"&&!O.locked){
+      O.secret=O.cur;O.locked=true;O.cur="";p["ready."+O.role]=true;cl.update(O.code,p).catch(oerr);renderOnline();return;
+    }
+    if(r.status==="playing"&&r.turn===O.role){
+      var idx=Object.keys(r.guesses||{}).length;
+      p["guesses."+idx]={by:O.role,g:O.cur,k:null};
+      p.turn=O.role==="host"?"guest":"host";
+      O.cur="";cl.update(O.code,p).catch(oerr);renderOnline();
+    }
+  }
+  var opd=$("opad");
+  for(var q=1;q<=9;q++){(function(q){var b=document.createElement("button");b.textContent=q;b.onclick=function(){opress(String(q))};opd.appendChild(b)})(q)}
+  var obk=document.createElement("button");obk.textContent="⌫";obk.onclick=oback;opd.appendChild(obk);
+  var oz=document.createElement("button");oz.textContent="0";oz.onclick=function(){opress("0")};opd.appendChild(oz);
+  var ogb=document.createElement("button");ogb.id="ogo";ogb.textContent="Guess";ogb.onclick=ogoFn;opd.appendChild(ogb);
+  $("oleave").onclick=leave;
+  $("ocreate").onclick=function(){
+    if(needIn())return;
+    var cs="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",code="";
+    for(var i=0;i<5;i++)code+=cs[Math.floor(Math.random()*cs.length)];
+    window.botCloud.room.create(code,{n:S.n,host:{uid:S.user.uid,name:nm()},guest:null,status:"lobby",ready:{host:false,guest:false},turn:"host",guesses:{},winner:null,created:Date.now()}).then(function(){enterRoom(code,"host")}).catch(oerr);
+  };
+  $("ojoin").onclick=function(){
+    if(needIn())return;
+    var code=$("ocode").value.trim().toUpperCase();if(!code)return;
+    window.botCloud.room.join(code,{uid:S.user.uid,name:nm()}).then(function(d){S.n=d.n;enterRoom(code,d.host.uid===S.user.uid?"host":"guest")}).catch(oerr);
+  };
+  $("sx").onclick=function(){$("sheet").classList.add("hide")};
+  $("sheet").onclick=function(e){if(e.target===this)this.classList.add("hide")};
+  $("gbtn").onclick=function(){if(!window.botCloud){alert("Firebase isn’t set up yet.");return}window.botCloud.signIn()};
+  $("guestbtn").onclick=function(){
+    if(!window.botCloud){alert("Firebase isn’t set up yet.");return}
+    var n=$("nick").value.trim();if(!n){$("nick").focus();return}
+    window.botCloud.guest(n);
+  };
+  updateAcct();
+  render();
+})();
+</script>
+<script type="module">
+// ===== FIREBASE: paste your own config values below (Firebase console > Project settings > Your apps) =====
+const firebaseConfig={
+  apiKey:"AIzaSyAlJ_vRcj0s0oFg3DuZUw-2Rll7uuzTB_I",
+  authDomain:"cow-bull-fe7fb.firebaseapp.com",
+  projectId:"cow-bull-fe7fb",
+  appId:"1:807143310332:web:627636e7a8e4abbf89a879"
+};
+// =========================================================================================================
+if(firebaseConfig.apiKey.startsWith("PASTE")){
+  console.warn("Firebase not configured yet. The game works offline and saves on this device only.");
+}else{
+  const V="10.14.1",B="https://www.gstatic.com/firebasejs/"+V+"/";
+  const {initializeApp}=await import(B+"firebase-app.js");
+  const {getAuth,GoogleAuthProvider,signInWithPopup,signInAnonymously,updateProfile,signOut,onAuthStateChanged}=await import(B+"firebase-auth.js");
+  const {getFirestore,doc,getDoc,setDoc,updateDoc,onSnapshot}=await import(B+"firebase-firestore.js");
+  const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+  let user=null;
+  window.botCloud={
+    signIn:()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>alert("Sign-in failed: "+e.code)),
+    pid:firebaseConfig.projectId,
+    signOut:()=>signOut(auth),
+    guest:async(name)=>{
+      try{const c=await signInAnonymously(auth);await updateProfile(c.user,{displayName:name});window.botAuth&&window.botAuth(auth.currentUser)}
+      catch(e){alert(e.code==="auth/operation-not-allowed"?"Guest play isn’t switched on yet. In Firebase, enable Anonymous under Authentication > Sign-in method.":"Couldn’t start guest mode: "+e.code)}
+    },
+    save:(pts,hist)=>{if(user)setDoc(doc(db,"botUsers",user.uid),{pts:pts,hist:hist,updated:Date.now()},{merge:true}).catch(e=>console.warn(e))}
+  };
+  window.botCloud.room={
+    create:(code,data)=>setDoc(doc(db,"rooms",code),data),
+    join:async(code,p)=>{
+      const r=doc(db,"rooms",code),s=await getDoc(r);
+      if(!s.exists())throw new Error("Room not found. Check the code.");
+      const d=s.data();
+      if(d.host.uid===p.uid)return d;
+      if(d.guest&&d.guest.uid!==p.uid)throw new Error("That room is already full.");
+      if(!d.guest)await updateDoc(r,{guest:p,status:"secrets"});
+      return d;
+    },
+    watch:(code,cb)=>onSnapshot(doc(db,"rooms",code),s=>cb(s.exists()?s.data():null)),
+    update:(code,patch)=>updateDoc(doc(db,"rooms",code),patch)
+  };
+  onAuthStateChanged(auth,async u=>{
+    user=u;
+    window.botAuth&&window.botAuth(u);
+    if(!u)return;
+    try{const s=await getDoc(doc(db,"botUsers",u.uid));window.botLoaded&&window.botLoaded(s.exists()?s.data():{})}catch(e){console.warn(e)}
+  });
+}
+</script>
+</body>
+</html>
